@@ -2,6 +2,7 @@ package com.example.controller;
 
 
 import com.example.model.Client;
+import com.example.service.ClientService;
 import com.example.service.IClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -13,12 +14,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins="http://localhost:4200")
 @RequestMapping(value="/api")
 public class ClientController {
 
     @Autowired
-    private IClientService clientService;
+    private ClientService clientService;
 
     @GetMapping("client/{id}")
     public ResponseEntity<Client> getClientById(@PathVariable("id") int id) {
