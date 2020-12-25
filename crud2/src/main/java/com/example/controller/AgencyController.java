@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.model.Agency;
+import com.example.service.AgencyService;
 import com.example.service.IAgencyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +18,7 @@ import java.util.List;
 public class AgencyController {
 
     @Autowired
-    private IAgencyService agencyService;
+    private AgencyService agencyService;
 
     @GetMapping("agency/{code}")
     public ResponseEntity<Agency> getAgencyById(@PathVariable("code") int code) {

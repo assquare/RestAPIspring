@@ -1,0 +1,9 @@
+POST http://localhost:8080/api/agency
+Content-Type: application/json
+Origin: "http://localhost:4200"
+
+{
+  "name":"ecobank",
+  "address":"thies",
+  "phone":"543433"
+}

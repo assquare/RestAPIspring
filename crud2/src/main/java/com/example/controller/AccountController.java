@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.model.Account;
+import com.example.service.AccountService;
 import com.example.service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +18,7 @@ import java.util.List;
 public class AccountController {
 
     @Autowired
-    private IAccountService accountService;
+    private AccountService accountService;
 
     @GetMapping("account/{id}")
     public ResponseEntity<Account> getAccountById(@PathVariable("id") Integer id) {
