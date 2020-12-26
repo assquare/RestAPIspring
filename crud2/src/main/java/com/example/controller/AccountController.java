@@ -1,7 +1,13 @@
 package com.example.controller;
 
 import com.example.model.Account;
-import com.example.service.IAccountService;
+import com.example.model.AccountInput;
+import com.example.model.Agency;
+import com.example.model.Client;
+import com.example.repository.AccountRepository;
+import com.example.repository.AgencyRepository;
+import com.example.repository.ClientRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -9,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins="http://localhost:4200")
@@ -17,40 +25,67 @@ import java.util.List;
 public class AccountController {
 
     @Autowired
-    private IAccountService accountService;
+    private AccountRepository accountRepository;
+    @Autowired
+    private ClientRepository clientRepository;
+    @Autowired
+    private AgencyRepository agencyRepository;
 
-    @GetMapping("account/{id}")
-    public ResponseEntity<Account> getAccountById(@PathVariable("id") Integer id) {
-        Account account = accountService.getAccountById(id);
-        return new ResponseEntity<Account>(account, HttpStatus.OK);
+    @GetMapping("accounts/{id}")
+    public ResponseEntity<Account> getAccountById(@PathVariable("id") int id) {
+        Optional<Account> account = accountRepository.findById(id);
+
+        if (account.isPresent()) {
+            return new ResponseEntity<>(account.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("accounts")
     public ResponseEntity<List<Account>> getAllAccounts() {
-        List<Account> list = accountService.getAllAccounts();
-        return new ResponseEntity<List<Account>>(list, HttpStatus.OK);
+        List<Account> list = new ArrayList<Account>();;
+        accountRepository.findAll().forEach(list::add);
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-    @PostMapping("account")
-    public ResponseEntity<Void> addAccount(@RequestBody Account account, UriComponentsBuilder builder) {
-        boolean flag = accountService.addAccount(account);
-        if (flag == false) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+    @PostMapping("accounts")
+    public ResponseEntity<Account> addAccount(@RequestBody AccountInput accountInput) {
+        Account account = new Account();
+        Optional<Client> client = clientRepository.findById(accountInput.getClient_Id());
+        account.setClient_ID(client.get());
+
+        Optional<Agency> agency = agencyRepository.findById(accountInput.getAgence_code());
+        account.setAgence_code(agency.get());
+
+        try {
+            Account _account = accountRepository.save(account);
+            return new ResponseEntity<Account>(_account, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/account/{id}").buildAndExpand(account.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+
     }
 
-    @PutMapping("account")
-    public ResponseEntity<Account> updateAccount(@RequestBody Account account) {
-        accountService.updateAccount(account);
-        return new ResponseEntity<Account>(account, HttpStatus.OK);
+    @PutMapping("accounts/{id}")
+    public ResponseEntity<Account> updateAccount(@PathVariable("id") int id, @RequestBody Account account) {
+        Optional<Account> accountData = accountRepository.findById(id);
+        if (accountData.isPresent()){
+            account.setId(id);
+            return new ResponseEntity<>(accountRepository.save(account), HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @DeleteMapping("account/{id}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable("id") Integer id) {
-        accountService.deleteAccount(id);
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+    @DeleteMapping("accounts/{id}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable("id") int id) {
+        try {
+            accountRepository.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

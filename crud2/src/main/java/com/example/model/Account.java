@@ -1,7 +1,11 @@
 package com.example.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import javax.persistence.*;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "compte")
 public class Account {
@@ -16,13 +20,13 @@ public class Account {
     @Column(name = "decouvert")
     private double decouvert;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "code", nullable = false)
-    private Agency agence_code;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "agence_code", nullable = false)
+    private Agency agence;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id", nullable = false)
-    private Client client_ID;
+    @JoinColumn(name = "client_Id",referencedColumnName = "id", nullable = false)
+    private Client client;
 
 
     public int getId() {
@@ -50,18 +54,18 @@ public class Account {
     }
 
     public Agency getAgence_code() {
-        return agence_code;
+        return agence;
     }
 
     public void setAgence_code(Agency agence_code) {
-        this.agence_code = agence_code;
+        this.agence = agence_code;
     }
 
     public Client getClient_ID() {
-        return client_ID;
+        return client;
     }
 
     public void setClient_ID(Client client_ID) {
-        this.client_ID = client_ID;
+        this.client= client_ID;
     }
 }

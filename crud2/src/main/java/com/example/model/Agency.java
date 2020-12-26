@@ -17,7 +17,7 @@ public class Agency {
     @Column(name = "address")
     private String address;
 
-    @Column(name = "phone_Number")
+    @Column(name = "phone_number")
     private String phone_Number;
 
     public int getCode() {

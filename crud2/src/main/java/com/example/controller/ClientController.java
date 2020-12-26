@@ -2,7 +2,7 @@ package com.example.controller;
 
 
 import com.example.model.Client;
-import com.example.service.IClientService;
+import com.example.repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins="http://localhost:4200")
@@ -18,41 +20,56 @@ import java.util.List;
 public class ClientController {
 
     @Autowired
-    private IClientService clientService;
+    private ClientRepository clientRepository;
 
-    @GetMapping("client/{id}")
+    @GetMapping("clients/{id}")
     public ResponseEntity<Client> getClientById(@PathVariable("id") int id) {
-        Client client = clientService.getClientById(id);
-        return new ResponseEntity<Client>(client, HttpStatus.OK);
+        Optional<Client> client = clientRepository.findById(id);
+
+        if (client.isPresent()) {
+            return new ResponseEntity<>(client.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("clients")
     public ResponseEntity<List<Client>> getAllClients() {
-        List<Client> list = clientService.getAllClients();
-        return new ResponseEntity<List<Client>>(list, HttpStatus.OK);
+        List<Client> list = new ArrayList<Client>();;
+        clientRepository.findAll().forEach(list::add);
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-    @PostMapping("client")
-    public ResponseEntity<Void> addClient(@RequestBody Client client, UriComponentsBuilder builder) {
-        boolean flag = clientService.addClient(client);
-        if (flag == false) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+    @PostMapping("clients")
+    public ResponseEntity<Client> addClient(@RequestBody Client client) {
+        try {
+            Client _client = clientRepository.save(client);
+            return new ResponseEntity<Client>(_client, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/client/{id}").buildAndExpand(client.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
     }
 
-    @PutMapping("client")
-    public ResponseEntity<Client> updateClient(@RequestBody Client client) {
-        clientService.updateClient(client);
-        return new ResponseEntity<Client>(client, HttpStatus.OK);
+    @PutMapping("clients/{id}")
+    public ResponseEntity<Client> updateClient(@PathVariable("id") int id, @RequestBody Client client) {
+        Optional<Client> clientData = clientRepository.findById(id);
+        if (clientData.isPresent()){
+            client.setId(id);
+            return new ResponseEntity<>(clientRepository.save(client), HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @DeleteMapping("client/{id}")
+    @DeleteMapping("clients/{id}")
     public ResponseEntity<Void> deleteClient(@PathVariable("id") int id) {
-        clientService.deleteClient(id);
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        try {
+            clientRepository.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

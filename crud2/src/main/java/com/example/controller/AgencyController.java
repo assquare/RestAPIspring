@@ -1,7 +1,9 @@
 package com.example.controller;
 
 import com.example.model.Agency;
-import com.example.service.IAgencyService;
+import com.example.model.Client;
+import com.example.repository.AgencyRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -9,48 +11,66 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins="http://localhost:4200", allowedHeaders = "*")
 @RequestMapping(value="/api")
 public class AgencyController {
 
-    @Autowired
-    private IAgencyService agencyService;
 
-    @GetMapping("agency/{code}")
+    @Autowired
+    private AgencyRepository agencyRepository;
+
+    @GetMapping("agencies/{code}")
     public ResponseEntity<Agency> getAgencyById(@PathVariable("code") int code) {
-        Agency agency = agencyService.getAgencyById(code);
-        return new ResponseEntity<Agency>(agency, HttpStatus.OK);
+        Optional<Agency> agency = agencyRepository.findById(code);
+
+        if (agency.isPresent()) {
+            return new ResponseEntity<>(agency.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("agencies")
     public ResponseEntity<List<Agency>> getAllAgencies() {
-        List<Agency> list = agencyService.getAllAgencies();
-        return new ResponseEntity<List<Agency>>(list, HttpStatus.OK);
+        List<Agency> list = new ArrayList<Agency>();;
+        agencyRepository.findAll().forEach(list::add);
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-    @PostMapping("agency")
-    public ResponseEntity<Void> addAgency(@RequestBody Agency agency, UriComponentsBuilder builder) {
-        boolean flag = agencyService.addAgency(agency);
-        if (flag == false) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+    @PostMapping("agencies")
+    public ResponseEntity<Agency> addAgency(@RequestBody Agency agency) {
+        try {
+            Agency _agency = agencyRepository.save(agency);
+            return new ResponseEntity<Agency>(_agency, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/agency/{code}").buildAndExpand(agency.getCode()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
     }
 
-    @PutMapping("agency")
-    public ResponseEntity<Agency> updateAgency(@RequestBody Agency agency) {
-        agencyService.updateAgency(agency);
-        return new ResponseEntity<Agency>(agency, HttpStatus.OK);
+    @PutMapping("agencies/{code}")
+    public ResponseEntity<Agency> updateAgency(@PathVariable("code") int code, @RequestBody Agency agency) {
+        Optional<Agency> agencyData = agencyRepository.findById(code);
+        if (agencyData.isPresent()){
+            agency.setCode(code);
+            return new ResponseEntity<>(agencyRepository.save(agency), HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @DeleteMapping("agency/{code}")
+    @DeleteMapping("agencies/{code}")
     public ResponseEntity<Void> deleteAgency(@PathVariable("code") int code) {
-        agencyService.deleteAgency(code);
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        try {
+            agencyRepository.deleteById(code);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
